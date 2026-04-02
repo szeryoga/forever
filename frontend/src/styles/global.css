@@ -129,13 +129,13 @@ button {
 }
 
 .logo-wrap {
-  margin: 8px auto 6px;
+  margin: 10px -15px 6px;
   display: flex;
   justify-content: center;
 }
 
 .logo-image {
-  width: min(100%, 330px);
+  width: 100%;
   display: block;
 }
 
