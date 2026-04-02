@@ -6,13 +6,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Forever Young API"
     api_prefix: str = "/api"
-    debug: bool = True
+    debug: bool = False
     db_host: str = "postgres"
     db_port: int = 5432
     db_name: str = "forever"
     db_user: str = "forever"
     db_password: str = "forever"
-    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+    cors_origins: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

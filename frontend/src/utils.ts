@@ -25,7 +25,7 @@ export function formatDateTime(value: string, language: Language) {
 export function priceFormatter(price: string, currency: string, language: Language) {
   return new Intl.NumberFormat(language === "ru" ? "ru-RU" : "en-US", {
     style: "currency",
-    currency,
+    currency: currency || "HUF",
     maximumFractionDigits: 0,
   }).format(Number(price));
 }

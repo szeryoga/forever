@@ -2,9 +2,6 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-ARG VITE_API_BASE_URL=http://localhost:8000
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-
 COPY package.json tsconfig.json tsconfig.node.json vite.config.ts index.html ./
 COPY public ./public
 COPY src ./src
@@ -12,9 +9,10 @@ COPY src ./src
 RUN npm install
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM alpine:3.22
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /dist
 
-EXPOSE 80
+COPY --from=build /app/dist ./
+
+CMD ["sh", "-c", "rm -rf /out/* && cp -r /dist/. /out"]

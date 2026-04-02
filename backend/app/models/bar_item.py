@@ -14,7 +14,7 @@ class BarItem(TimestampMixin, Base):
     short_description_ru: Mapped[str] = mapped_column(Text())
     short_description_en: Mapped[str] = mapped_column(Text())
     price: Mapped[float] = mapped_column(Numeric(10, 2))
-    currency: Mapped[str] = mapped_column(String(10), default="RUB")
+    currency: Mapped[str] = mapped_column(String(10), default="HUF")
     image_url: Mapped[str] = mapped_column(String(500))
     category: Mapped[str] = mapped_column(String(50))
     is_published: Mapped[bool] = mapped_column(Boolean(), default=True, nullable=False)

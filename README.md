@@ -1,6 +1,21 @@
-# Forever Young Telegram Mini App MVP
+# Forever Young Production Deployment
 
-Production-like local MVP for the "Forever Young" bar with a Telegram Mini App frontend, a separate admin panel, a FastAPI backend, and PostgreSQL. The project runs locally on Ubuntu with Docker Compose.
+## Stack
+
+- `nginx` serves the Telegram Mini App and admin panel static bundles
+- `backend` runs FastAPI behind `gunicorn` + `uvicorn` workers
+- `postgres` stores application data
+- `frontend-builder` builds `frontend/dist`
+- `admin-builder` builds `admin-panel/dist`
+
+## URLs
+
+- Mini App: `http://SERVER_IP/`
+- Admin panel: `http://SERVER_IP/admin/`
+- API: `http://SERVER_IP/api/`
+- Health: `http://SERVER_IP/health`
+
+For Telegram Mini App production use a real HTTPS domain instead of `SERVER_IP`.
 
 ## Project Structure
 
@@ -9,67 +24,143 @@ Production-like local MVP for the "Forever Young" bar with a Telegram Mini App f
 ├── admin-panel
 ├── backend
 ├── frontend
-├── references
+├── nginx
+│   └── nginx.conf
 ├── .env.example
 ├── docker-compose.yml
 └── README.md
 ```
 
-## Services
+## Deploy On Ubuntu
 
-- `frontend`: Telegram Mini App UI on `http://localhost:3000`
-- `admin-panel`: admin CRUD UI on `http://localhost:3001`
-- `backend`: FastAPI REST API on `http://localhost:8000`
-- `postgres`: PostgreSQL 16 inside Docker on port `5432`
-
-## Run
+1. Install Docker and Docker Compose plugin.
+2. Clone the repository to the server.
+3. Create environment file:
 
 ```bash
-docker compose up --build
+cp .env.example .env
 ```
 
-The stack works with built-in default environment values. If you want to override them, copy `.env.example` to `.env` and adjust the values.
+4. Edit `.env` and set:
 
-## URLs
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `BACKEND_CORS_ORIGINS`
 
-- Mini App frontend: `http://localhost:3000`
-- Admin panel: `http://localhost:3001`
-- Backend API docs: `http://localhost:8000/docs`
-- Backend health: `http://localhost:8000/health`
+Example:
 
-## Backend API
+```env
+POSTGRES_DB=forever
+POSTGRES_USER=forever
+POSTGRES_PASSWORD=change_me
+NGINX_PORT=80
+BACKEND_CORS_ORIGINS=https://miniapp.example.com
+GUNICORN_WORKERS=4
+GUNICORN_TIMEOUT=60
+```
 
-Public endpoints for the mini app:
+5. Build and start the stack:
 
-- `GET /api/public/settings`
-- `GET /api/public/events`
-- `GET /api/public/events/{id}`
-- `GET /api/public/bar-items`
-- `GET /api/public/profile-page`
+```bash
+docker compose up --build -d
+```
 
-Admin endpoints:
+## Access
 
-- `GET /api/admin/settings`
-- `PUT /api/admin/settings/{key}`
-- `GET /api/admin/events`
-- `POST /api/admin/events`
-- `GET /api/admin/events/{id}`
-- `PUT /api/admin/events/{id}`
-- `DELETE /api/admin/events/{id}`
-- `GET /api/admin/bar-items`
-- `POST /api/admin/bar-items`
-- `GET /api/admin/bar-items/{id}`
-- `PUT /api/admin/bar-items/{id}`
-- `DELETE /api/admin/bar-items/{id}`
+- `http://SERVER_IP/`
+- `http://SERVER_IP/admin/`
+
+If you configure DNS:
+
+- `https://miniapp.example.com/`
+- `https://miniapp.example.com/admin/`
+
+## Operations
+
+Start or rebuild everything:
+
+```bash
+docker compose up --build -d
+```
+
+Restart services:
+
+```bash
+docker compose restart nginx backend
+```
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Stop services and remove volumes:
+
+```bash
+docker compose down -v
+```
+
+Show logs:
+
+```bash
+docker compose logs -f nginx backend postgres
+```
+
+## Update Frontend Or Admin Panel
+
+After frontend or admin-panel code changes:
+
+```bash
+docker compose up --build -d frontend-builder admin-builder nginx
+```
+
+If backend code changed too:
+
+```bash
+docker compose up --build -d backend nginx
+```
+
+## SSL With Certbot
+
+Recommended production flow:
+
+1. Point your domain A record to the server IP.
+2. Open ports `80` and `443` in the server firewall.
+3. Start the stack on port `80`.
+4. Install Certbot on Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y certbot
+```
+
+5. Stop nginx container temporarily:
+
+```bash
+docker compose stop nginx
+```
+
+6. Issue certificate:
+
+```bash
+sudo certbot certonly --standalone -d miniapp.example.com
+```
+
+7. Mount certificates into the nginx container and add an HTTPS server block.
+8. Configure Telegram Mini App to use the HTTPS domain.
+
+Certificate files are usually placed in:
+
+```text
+/etc/letsencrypt/live/miniapp.example.com/
+```
 
 ## Notes
 
-- Database tables are created automatically on backend startup using `SQLAlchemy metadata.create_all()`.
-- Alembic is intentionally not used yet.
-- Seed data is loaded automatically on the first startup:
-  - default page titles
-  - multiple events
-  - multiple bar items
-- CORS is configured for local frontend and admin origins.
-- The mini app reads Telegram WebApp user data when opened inside Telegram and falls back to demo data in local browser mode.
-- All documentation and source comments are in English.
+- Vite dev server is not used anywhere in this setup.
+- `frontend` and `admin-panel` are built into static files only.
+- `nginx` serves static files and proxies `/api` to `backend:8000`.
+- `postgres` is internal only and is not exposed to the public network.
+- Backend tables and seed data are initialized automatically on startup.

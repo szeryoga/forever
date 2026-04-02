@@ -11,6 +11,9 @@ from app.services.settings_service import ensure_default_settings
 def seed_data(db: Session) -> None:
     ensure_default_settings(db)
 
+    for item in db.scalars(select(BarItem).where(BarItem.currency != "HUF")).all():
+        item.currency = "HUF"
+
     if not db.scalars(select(Event.id)).first():
         db.add_all(
             [
@@ -82,7 +85,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Классические пельмени со сметаной.",
                     short_description_en="Classic dumplings served with sour cream.",
                     price=2200,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1625944230945-1b7dd3b949ab?auto=format&fit=crop&w=900&q=80",
                     category="food",
                     is_published=True,
@@ -94,7 +97,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Нежные вареники с картофелем и луком.",
                     short_description_en="Soft dumplings with potato and onion filling.",
                     price=1900,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80",
                     category="food",
                     is_published=True,
@@ -106,7 +109,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Слоеный десерт с ванильным кремом.",
                     short_description_en="Layered dessert with vanilla cream.",
                     price=1800,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80",
                     category="food",
                     is_published=True,
@@ -118,7 +121,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Медовые коржи с легким кремом.",
                     short_description_en="Honey layers with a light cream filling.",
                     price=1600,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=900&q=80",
                     category="food",
                     is_published=True,
@@ -130,7 +133,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Цитрус, биттер и игристое с яркой подачей.",
                     short_description_en="Citrus, bitter, and sparkling wine with a vivid serve.",
                     price=950,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80",
                     category="drink",
                     is_published=True,
@@ -142,7 +145,7 @@ def seed_data(db: Session) -> None:
                     short_description_ru="Освежающий микс с вишней и содовой.",
                     short_description_en="Refreshing mix with cherry and soda.",
                     price=870,
-                    currency="RUB",
+                    currency="HUF",
                     image_url="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=80",
                     category="drink",
                     is_published=True,

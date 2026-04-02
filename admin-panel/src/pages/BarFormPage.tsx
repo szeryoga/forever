@@ -12,7 +12,7 @@ const emptyItem: BarPayload = {
   short_description_ru: "",
   short_description_en: "",
   price: "0",
-  currency: "RUB",
+  currency: "HUF",
   image_url: "",
   category: "food",
   is_published: true,
