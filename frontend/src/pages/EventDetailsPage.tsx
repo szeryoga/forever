@@ -1,7 +1,6 @@
 import { useParams } from "react-router-dom";
 
 import { publicApi } from "../api/public";
-import { Logo } from "../components/Logo";
 import { useLanguage } from "../context/LanguageContext";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { formatDateTime, pickLocalized } from "../utils";
@@ -22,7 +21,6 @@ export function EventDetailsPage() {
 
   return (
     <section className="event-details-page">
-      <Logo />
       <div className="event-hero">
         <img src={event.image_url} alt={pickLocalized(event, "title", language)} />
       </div>

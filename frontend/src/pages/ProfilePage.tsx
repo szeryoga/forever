@@ -1,5 +1,4 @@
 import { publicApi } from "../api/public";
-import { Logo } from "../components/Logo";
 import { ProfileCard } from "../components/ProfileCard";
 import { SectionTitle } from "../components/SectionTitle";
 import { useLanguage } from "../context/LanguageContext";
@@ -13,7 +12,6 @@ export function ProfilePage() {
 
   return (
     <section>
-      <Logo />
       <SectionTitle>{data?.title?.[language] ?? "..."}</SectionTitle>
       <ProfileCard user={user} />
       <div className="language-switch">

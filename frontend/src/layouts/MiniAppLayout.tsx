@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 
 import { BottomNav } from "../components/BottomNav";
+import { Logo } from "../components/Logo";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -12,7 +13,10 @@ export function MiniAppLayout() {
   return (
     <div className="miniapp-shell">
       <div className="screen-frame">
-        <ScreenHeader showBack={showBack} />
+        <div className="screen-top">
+          <ScreenHeader showBack={showBack} />
+          <Logo />
+        </div>
         <main className="screen-content">
           <Outlet />
         </main>
