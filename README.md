@@ -2,20 +2,20 @@
 
 ## Endpoints
 
-- Mini App local URL: `http://127.0.0.1:9091`
+- Mini App local URL: `https://127.0.0.1:9091`
 - Mini App DNS: `app-demo.etalonfood.com`
-- Admin local URL: `http://127.0.0.1:9092`
+- Admin local URL: `https://127.0.0.1:9092`
 - Admin DNS: `admin-demo.etalonfood.com`
-- API local URL: `http://127.0.0.1:9000`
+- API local URL: `https://127.0.0.1:9000`
 - API DNS: `api-demo.etalonfood.com`
 
 Public URLs with DNS and ports:
 
-- Mini App: `http://app-demo.etalonfood.com:9091`
-- Admin panel: `http://admin-demo.etalonfood.com:9092`
-- API: `http://api-demo.etalonfood.com:9000`
-- API health: `http://api-demo.etalonfood.com:9000/health`
-- API docs: `http://api-demo.etalonfood.com:9000/docs`
+- Mini App: `https://app-demo.etalonfood.com:9091`
+- Admin panel: `https://admin-demo.etalonfood.com:9092`
+- API: `https://api-demo.etalonfood.com:9000`
+- API health: `https://api-demo.etalonfood.com:9000/health`
+- API docs: `https://api-demo.etalonfood.com:9000/docs`
 
 ## Stack
 
@@ -66,14 +66,15 @@ Example:
 POSTGRES_DB=forever
 POSTGRES_USER=forever
 POSTGRES_PASSWORD=change_me
+LETSENCRYPT_DIR=/etc/letsencrypt
 APP_PORT=9091
 ADMIN_PORT=9092
 API_PORT=9000
 APP_DOMAIN=app-demo.etalonfood.com
 ADMIN_DOMAIN=admin-demo.etalonfood.com
 API_DOMAIN=api-demo.etalonfood.com
-VITE_API_BASE_URL=http://api-demo.etalonfood.com:9000
-BACKEND_CORS_ORIGINS=http://app-demo.etalonfood.com:9091,http://admin-demo.etalonfood.com:9092
+VITE_API_BASE_URL=https://api-demo.etalonfood.com:9000
+BACKEND_CORS_ORIGINS=https://app-demo.etalonfood.com:9091,https://admin-demo.etalonfood.com:9092
 GUNICORN_WORKERS=4
 GUNICORN_TIMEOUT=60
 ```
@@ -86,15 +87,15 @@ docker compose up --build -d
 
 ## Access
 
-- Mini App: `http://127.0.0.1:9091`
-- Admin panel: `http://127.0.0.1:9092`
-- API: `http://127.0.0.1:9000`
+- Mini App: `https://127.0.0.1:9091`
+- Admin panel: `https://127.0.0.1:9092`
+- API: `https://127.0.0.1:9000`
 
 DNS-based access:
 
-- `http://app-demo.etalonfood.com:9091`
-- `http://admin-demo.etalonfood.com:9092`
-- `http://api-demo.etalonfood.com:9000`
+- `https://app-demo.etalonfood.com:9091`
+- `https://admin-demo.etalonfood.com:9092`
+- `https://api-demo.etalonfood.com:9000`
 
 ## Operations
 
@@ -144,15 +145,13 @@ docker compose up --build -d backend nginx
 
 ## SSL With Certbot
 
-Telegram Mini App should use HTTPS in production.
-
 1. Point these DNS records to the server IP:
 
 - `app-demo.etalonfood.com`
 - `admin-demo.etalonfood.com`
 - `api-demo.etalonfood.com`
 
-2. Open ports `80`, `443`, `9091`, `9092`, and `9000` if you need direct external access during transition.
+2. Open port `80` temporarily for certificate issuance, plus `9091`, `9092`, and `9000` for the final HTTPS endpoints.
 3. Install Certbot on Ubuntu:
 
 ```bash
@@ -175,10 +174,21 @@ sudo certbot certonly --standalone \
   -d api-demo.etalonfood.com
 ```
 
-6. Mount certificates into the nginx container.
-7. Add HTTPS listeners in `nginx/nginx.conf`.
-8. Change `VITE_API_BASE_URL` and `BACKEND_CORS_ORIGINS` to `https://...`.
-9. Configure the Telegram Mini App to use the HTTPS app domain.
+6. Ensure `.env` contains:
+
+```env
+LETSENCRYPT_DIR=/etc/letsencrypt
+VITE_API_BASE_URL=https://api-demo.etalonfood.com:9000
+BACKEND_CORS_ORIGINS=https://app-demo.etalonfood.com:9091,https://admin-demo.etalonfood.com:9092
+```
+
+7. Start the stack:
+
+```bash
+docker compose up --build -d
+```
+
+8. Configure the Telegram Mini App to use `https://app-demo.etalonfood.com:9091`.
 
 ## Notes
 
@@ -187,3 +197,4 @@ sudo certbot certonly --standalone \
 - Because app, admin, and API are now separate origins, both UIs use `VITE_API_BASE_URL`.
 - `postgres` is internal only and is not exposed publicly.
 - Backend tables and seed data are initialized automatically on startup.
+- Nginx expects valid Let's Encrypt certificates under `/etc/letsencrypt/live/<domain>/`.

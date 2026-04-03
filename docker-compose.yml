@@ -62,7 +62,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://api-demo.etalonfood.com:9000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://api-demo.etalonfood.com:9000}
     volumes:
       - frontend_dist:/out
     restart: "no"
@@ -76,7 +76,7 @@ services:
     build:
       context: ./admin-panel
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://api-demo.etalonfood.com:9000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://api-demo.etalonfood.com:9000}
     volumes:
       - admin_dist:/out
     restart: "no"
@@ -102,10 +102,15 @@ services:
       - "${API_PORT:-9000}:9000"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${LETSENCRYPT_DIR:-/etc/letsencrypt}:/etc/letsencrypt:ro
       - frontend_dist:/var/www/frontend:ro
       - admin_dist:/var/www/admin:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9091/ || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-check-certificate --header='Host: app-demo.etalonfood.com' -q -O /dev/null https://127.0.0.1:9091/ || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
