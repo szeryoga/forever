@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: forever-postgres
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -15,6 +16,7 @@ services:
       retries: 20
 
   backend:
+    container_name: forever-backend
     build:
       context: ./backend
     restart: unless-stopped
@@ -47,6 +49,7 @@ services:
       retries: 10
 
   frontend-builder:
+    container_name: forever-frontend
     build:
       context: ./frontend
       args:
@@ -56,6 +59,7 @@ services:
     restart: "no"
 
   admin-builder:
+    container_name: forever-admin-panel
     build:
       context: ./admin-panel
       args:
@@ -65,6 +69,7 @@ services:
     restart: "no"
 
   nginx:
+    container_name: forever-nginx
     image: nginx:1.27-alpine
     restart: unless-stopped
     depends_on:

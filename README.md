@@ -27,6 +27,13 @@ Public URLs with DNS and ports:
 - `frontend-builder` builds `frontend/dist`
 - `admin-builder` builds `admin-panel/dist`
 
+## Container Names
+
+- `forever-frontend`
+- `forever-admin-panel`
+- `forever-backend`
+- `forever-postgres`
+
 ## Project Structure
 
 ```text
