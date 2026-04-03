@@ -97,7 +97,6 @@ services:
       admin-builder:
         condition: service_completed_successfully
     ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
       - "${APP_PORT:-9091}:9091"
       - "${ADMIN_PORT:-9092}:9092"
       - "${API_PORT:-9000}:9000"

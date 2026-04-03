@@ -11,11 +11,11 @@
 
 Public URLs with DNS and ports:
 
-- Mini App: `http://app-demo.etalonfood.com`
-- Admin panel: `http://admin-demo.etalonfood.com`
-- API: `http://api-demo.etalonfood.com`
-- API health: `http://api-demo.etalonfood.com/health`
-- API docs: `http://api-demo.etalonfood.com/docs`
+- Mini App: `http://app-demo.etalonfood.com:9091`
+- Admin panel: `http://admin-demo.etalonfood.com:9092`
+- API: `http://api-demo.etalonfood.com:9000`
+- API health: `http://api-demo.etalonfood.com:9000/health`
+- API docs: `http://api-demo.etalonfood.com:9000/docs`
 
 ## Stack
 
@@ -66,7 +66,6 @@ Example:
 POSTGRES_DB=forever
 POSTGRES_USER=forever
 POSTGRES_PASSWORD=change_me
-NGINX_HTTP_PORT=80
 APP_PORT=9091
 ADMIN_PORT=9092
 API_PORT=9000
@@ -74,7 +73,7 @@ APP_DOMAIN=app-demo.etalonfood.com
 ADMIN_DOMAIN=admin-demo.etalonfood.com
 API_DOMAIN=api-demo.etalonfood.com
 VITE_API_BASE_URL=http://api-demo.etalonfood.com:9000
-BACKEND_CORS_ORIGINS=http://app-demo.etalonfood.com,http://admin-demo.etalonfood.com,http://app-demo.etalonfood.com:9091,http://admin-demo.etalonfood.com:9092
+BACKEND_CORS_ORIGINS=http://app-demo.etalonfood.com:9091,http://admin-demo.etalonfood.com:9092
 GUNICORN_WORKERS=4
 GUNICORN_TIMEOUT=60
 ```
@@ -92,12 +91,6 @@ docker compose up --build -d
 - API: `http://127.0.0.1:9000`
 
 DNS-based access:
-
-- `http://app-demo.etalonfood.com`
-- `http://admin-demo.etalonfood.com`
-- `http://api-demo.etalonfood.com`
-
-Direct port-based access:
 
 - `http://app-demo.etalonfood.com:9091`
 - `http://admin-demo.etalonfood.com:9092`
@@ -194,4 +187,3 @@ sudo certbot certonly --standalone \
 - Because app, admin, and API are now separate origins, both UIs use `VITE_API_BASE_URL`.
 - `postgres` is internal only and is not exposed publicly.
 - Backend tables and seed data are initialized automatically on startup.
-- For DNS access without explicit ports, Docker nginx must own host port `80`.
