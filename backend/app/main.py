@@ -14,6 +14,7 @@ from app.services.seed import seed_data
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, debug=settings.debug)
+DB_INIT_LOCK_ID = 22042026
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,12 +40,21 @@ def wait_for_db(max_attempts: int = 30, delay_seconds: int = 2) -> None:
             time.sleep(delay_seconds)
 
 
+def initialize_database() -> None:
+    with engine.connect() as connection:
+        connection.execute(text("SELECT pg_advisory_lock(:lock_id)"), {"lock_id": DB_INIT_LOCK_ID})
+        try:
+            Base.metadata.create_all(bind=engine)
+            with SessionLocal() as session:
+                seed_data(session)
+        finally:
+            connection.execute(text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": DB_INIT_LOCK_ID})
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     wait_for_db()
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as session:
-        seed_data(session)
+    initialize_database()
 
 
 @app.get("/health")
