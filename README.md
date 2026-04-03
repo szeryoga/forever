@@ -1,21 +1,31 @@
 # Forever Young Production Deployment
 
+## Endpoints
+
+- Mini App local URL: `http://127.0.0.1:9091`
+- Mini App DNS: `app-demo.etalonfood.com`
+- Admin local URL: `http://127.0.0.1:9092`
+- Admin DNS: `admin-demo.etalonfood.com`
+- API local URL: `http://127.0.0.1:9000`
+- API DNS: `api-demo.etalonfood.com`
+
+Public URLs with DNS and ports:
+
+- Mini App: `http://app-demo.etalonfood.com:9091`
+- Admin panel: `http://admin-demo.etalonfood.com:9092`
+- API: `http://api-demo.etalonfood.com:9000`
+- API health: `http://api-demo.etalonfood.com:9000/health`
+- API docs: `http://api-demo.etalonfood.com:9000/docs`
+
 ## Stack
 
-- `nginx` serves the Telegram Mini App and admin panel static bundles
+- `nginx` serves the Mini App on port `9091`
+- `nginx` serves the admin panel on port `9092`
+- `nginx` proxies the API on port `9000`
 - `backend` runs FastAPI behind `gunicorn` + `uvicorn` workers
 - `postgres` stores application data
 - `frontend-builder` builds `frontend/dist`
 - `admin-builder` builds `admin-panel/dist`
-
-## URLs
-
-- Mini App: `http://SERVER_IP/`
-- Admin panel: `http://SERVER_IP/admin/`
-- API: `http://SERVER_IP/api/`
-- Health: `http://SERVER_IP/health`
-
-For Telegram Mini App production use a real HTTPS domain instead of `SERVER_IP`.
 
 ## Project Structure
 
@@ -41,12 +51,7 @@ For Telegram Mini App production use a real HTTPS domain instead of `SERVER_IP`.
 cp .env.example .env
 ```
 
-4. Edit `.env` and set:
-
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `BACKEND_CORS_ORIGINS`
+4. Edit `.env` if needed.
 
 Example:
 
@@ -54,8 +59,14 @@ Example:
 POSTGRES_DB=forever
 POSTGRES_USER=forever
 POSTGRES_PASSWORD=change_me
-NGINX_PORT=80
-BACKEND_CORS_ORIGINS=https://miniapp.example.com
+APP_PORT=9091
+ADMIN_PORT=9092
+API_PORT=9000
+APP_DOMAIN=app-demo.etalonfood.com
+ADMIN_DOMAIN=admin-demo.etalonfood.com
+API_DOMAIN=api-demo.etalonfood.com
+VITE_API_BASE_URL=http://api-demo.etalonfood.com:9000
+BACKEND_CORS_ORIGINS=http://app-demo.etalonfood.com:9091,http://admin-demo.etalonfood.com:9092
 GUNICORN_WORKERS=4
 GUNICORN_TIMEOUT=60
 ```
@@ -68,13 +79,15 @@ docker compose up --build -d
 
 ## Access
 
-- `http://SERVER_IP/`
-- `http://SERVER_IP/admin/`
+- Mini App: `http://127.0.0.1:9091`
+- Admin panel: `http://127.0.0.1:9092`
+- API: `http://127.0.0.1:9000`
 
-If you configure DNS:
+DNS-based access:
 
-- `https://miniapp.example.com/`
-- `https://miniapp.example.com/admin/`
+- `http://app-demo.etalonfood.com:9091`
+- `http://admin-demo.etalonfood.com:9092`
+- `http://api-demo.etalonfood.com:9000`
 
 ## Operations
 
@@ -124,43 +137,46 @@ docker compose up --build -d backend nginx
 
 ## SSL With Certbot
 
-Recommended production flow:
+Telegram Mini App should use HTTPS in production.
 
-1. Point your domain A record to the server IP.
-2. Open ports `80` and `443` in the server firewall.
-3. Start the stack on port `80`.
-4. Install Certbot on Ubuntu:
+1. Point these DNS records to the server IP:
+
+- `app-demo.etalonfood.com`
+- `admin-demo.etalonfood.com`
+- `api-demo.etalonfood.com`
+
+2. Open ports `80`, `443`, `9091`, `9092`, and `9000` if you need direct external access during transition.
+3. Install Certbot on Ubuntu:
 
 ```bash
 sudo apt update
 sudo apt install -y certbot
 ```
 
-5. Stop nginx container temporarily:
+4. Stop nginx container temporarily:
 
 ```bash
 docker compose stop nginx
 ```
 
-6. Issue certificate:
+5. Issue certificates:
 
 ```bash
-sudo certbot certonly --standalone -d miniapp.example.com
+sudo certbot certonly --standalone \
+  -d app-demo.etalonfood.com \
+  -d admin-demo.etalonfood.com \
+  -d api-demo.etalonfood.com
 ```
 
-7. Mount certificates into the nginx container and add an HTTPS server block.
-8. Configure Telegram Mini App to use the HTTPS domain.
-
-Certificate files are usually placed in:
-
-```text
-/etc/letsencrypt/live/miniapp.example.com/
-```
+6. Mount certificates into the nginx container.
+7. Add HTTPS listeners in `nginx/nginx.conf`.
+8. Change `VITE_API_BASE_URL` and `BACKEND_CORS_ORIGINS` to `https://...`.
+9. Configure the Telegram Mini App to use the HTTPS app domain.
 
 ## Notes
 
 - Vite dev server is not used anywhere in this setup.
-- `frontend` and `admin-panel` are built into static files only.
-- `nginx` serves static files and proxies `/api` to `backend:8000`.
-- `postgres` is internal only and is not exposed to the public network.
+- Frontend and admin panel are static builds only.
+- Because app, admin, and API are now separate origins, both UIs use `VITE_API_BASE_URL`.
+- `postgres` is internal only and is not exposed publicly.
 - Backend tables and seed data are initialized automatically on startup.
