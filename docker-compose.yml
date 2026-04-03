@@ -14,6 +14,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      default:
+        aliases:
+          - forever-postgres
 
   backend:
     container_name: forever-backend
@@ -47,6 +51,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      default:
+        aliases:
+          - backend
+          - forever-backend
 
   frontend-builder:
     container_name: forever-frontend
@@ -57,6 +66,10 @@ services:
     volumes:
       - frontend_dist:/out
     restart: "no"
+    networks:
+      default:
+        aliases:
+          - forever-frontend
 
   admin-builder:
     container_name: forever-admin-panel
@@ -67,6 +80,10 @@ services:
     volumes:
       - admin_dist:/out
     restart: "no"
+    networks:
+      default:
+        aliases:
+          - forever-admin-panel
 
   nginx:
     container_name: forever-nginx
@@ -93,6 +110,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      default:
+        aliases:
+          - forever-nginx
 
 volumes:
   postgres_data:
