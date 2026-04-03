@@ -26,14 +26,37 @@ export function useTelegramUser() {
   const [user, setUser] = useState<TelegramUser>(fallbackUser);
 
   useEffect(() => {
-    const webApp = window.Telegram?.WebApp;
-    webApp?.ready();
-    webApp?.expand();
+    let attempts = 0;
+    const maxAttempts = 20;
 
-    const telegramUser = webApp?.initDataUnsafe?.user;
-    if (telegramUser) {
-      setUser(telegramUser);
+    const syncTelegramUser = () => {
+      const webApp = window.Telegram?.WebApp;
+      webApp?.ready();
+      webApp?.expand();
+
+      const telegramUser = webApp?.initDataUnsafe?.user;
+      if (telegramUser) {
+        setUser(telegramUser);
+        return true;
+      }
+
+      return false;
+    };
+
+    if (syncTelegramUser()) {
+      return;
     }
+
+    const intervalId = window.setInterval(() => {
+      attempts += 1;
+      if (syncTelegramUser() || attempts >= maxAttempts) {
+        window.clearInterval(intervalId);
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   return user;
