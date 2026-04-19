@@ -1,46 +1,42 @@
 services:
   postgres:
-    container_name: forever-postgres
     image: postgres:16-alpine
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-forever}
-      POSTGRES_USER: ${POSTGRES_USER:-forever}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forever}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forever} -d ${POSTGRES_DB:-forever}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
       timeout: 5s
-      retries: 20
-    networks:
-      default:
-        aliases:
-          - forever-postgres
+      retries: 5
 
   backend:
-    container_name: forever-backend
     build:
       context: ./backend
     restart: unless-stopped
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${POSTGRES_DB:-forever}
-      DB_USER: ${POSTGRES_USER:-forever}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-forever}
-      CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-}
-    ports:
-      - "127.0.0.1:${BACKEND_BIND_PORT:-19000}:8000"
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS}
     command: >
       gunicorn app.main:app
       -k uvicorn.workers.UvicornWorker
-      -w ${GUNICORN_WORKERS:-4}
-      --timeout ${GUNICORN_TIMEOUT:-60}
+      -w ${GUNICORN_WORKERS}
+      --timeout ${GUNICORN_TIMEOUT}
       -b 0.0.0.0:8000
     healthcheck:
       test:
@@ -48,42 +44,51 @@ services:
           "CMD-SHELL",
           "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\"",
         ]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 10
+      retries: 5
     networks:
       default:
+      gateway:
         aliases:
-          - backend
           - forever-backend
 
-  frontend-builder:
-    container_name: forever-frontend
+  frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://api-demo.etalonfood.com:9000}
-    volumes:
-      - ./deploy/frontend:/out
-    restart: "no"
+        VITE_API_BASE: ${API_BASE_PATH}
+        VITE_APP_BASE: ${APP_BASE_PATH}/
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       default:
+      gateway:
         aliases:
           - forever-frontend
 
-  admin-builder:
-    container_name: forever-admin-panel
+  admin-panel:
     build:
       context: ./admin-panel
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://api-demo.etalonfood.com:9000}
-    volumes:
-      - ./deploy/admin:/out
-    restart: "no"
+        VITE_API_BASE: ${API_BASE_PATH}
+        VITE_ADMIN_BASE: ${ADMIN_BASE_PATH}/
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       default:
+      gateway:
         aliases:
-          - forever-admin-panel
+          - forever-admin
 
 volumes:
   postgres_data:
+
+networks:
+  gateway:
+    name: ${GATEWAY_NETWORK:-gateway-net}
+    external: true

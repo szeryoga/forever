@@ -2,19 +2,21 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-ARG VITE_API_BASE_URL=https://api-demo.etalonfood.com:9000
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-
 COPY package.json tsconfig.json tsconfig.node.json vite.config.ts index.html ./
+RUN npm install
+
 COPY src ./src
 
-RUN npm install
+ARG VITE_API_BASE=/api
+ARG VITE_ADMIN_BASE=/admin/
+ENV VITE_API_BASE=${VITE_API_BASE}
+ENV VITE_ADMIN_BASE=${VITE_ADMIN_BASE}
+
 RUN npm run build
 
-FROM alpine:3.22
+FROM nginx:1.27-alpine
 
-WORKDIR /dist
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker.nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=build /app/dist ./
-
-CMD ["sh", "-c", "rm -rf /out/* && cp -r /dist/. /out"]
+EXPOSE 80
